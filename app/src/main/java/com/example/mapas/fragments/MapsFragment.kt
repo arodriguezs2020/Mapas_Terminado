@@ -1,8 +1,10 @@
 package com.example.mapas.fragments
 
+import android.content.Intent
 import android.location.Address
 import android.location.Geocoder
 import android.os.Bundle
+import android.provider.Settings
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -17,9 +19,11 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import java.io.IOException
+import java.lang.Exception
 import java.util.*
 
-class MapFragment : Fragment(), OnMapReadyCallback {
+@Suppress("DEPRECATION")
+class MapsFragment : Fragment(), OnMapReadyCallback {
 
     private var miVista : View? = null
     private var geoCoder: Geocoder? = null
@@ -42,6 +46,28 @@ class MapFragment : Fragment(), OnMapReadyCallback {
         mapView.onCreate(null)
         mapView.onResume()
         mapView.getMapAsync(this)
+        checarSenialGPS()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checarSenialGPS()
+    }
+
+    fun checarSenialGPS() {
+
+        try {
+            val gps = Settings.Secure.getInt(activity?.contentResolver, Settings.Secure.LOCATION_MODE)
+
+            if (gps == 0) {
+                Toast.makeText(context, "Por favor, para continuar , habilita la señal GPS", Toast.LENGTH_LONG).show()
+                val intent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                startActivity(intent)
+            }
+        } catch (e: Settings.SettingNotFoundException) {
+            e.printStackTrace()
+        }
+
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -49,13 +75,13 @@ class MapFragment : Fragment(), OnMapReadyCallback {
 
         val logrono = LatLng(42.458388955061096, -2.4640059471130376)
         val zoom = CameraUpdateFactory.zoomTo(10f)
-        gMap.addMarker(MarkerOptions().position(logrono).title("Marker in Logroño, La Rioja").draggable(true))
+        gMap.addMarker(MarkerOptions().position(logrono).draggable(true))
 
         gMap.moveCamera(CameraUpdateFactory.newLatLng(logrono))
         gMap.animateCamera(zoom)
         gMap.setOnMarkerDragListener(object: GoogleMap.OnMarkerDragListener{
             override fun onMarkerDragStart(p0: Marker) {
-
+                p0.hideInfoWindow()
             }
 
             override fun onMarkerDrag(p0: Marker) {
@@ -74,11 +100,17 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                     e.printStackTrace()
                 }
 
-                val pais = direccion?.get(0)?.countryName
-                val estado = direccion?.get(0)?.adminArea
+                //val pais = direccion?.get(0)?.countryName
+                //val estado = direccion?.get(0)?.adminArea
                 val ciudad = direccion?.get(0)?.locality
                 val calle = direccion?.get(0)?.getAddressLine(0)
-                val codigoPostal = direccion?.get(0)?.postalCode
+                //val codigoPostal = direccion?.get(0)?.postalCode
+
+                marker.title = ciudad
+                marker.snippet = calle
+                marker.showInfoWindow()
+
+                /*
 
                 Toast.makeText(context, "La Locación es: \n" +
                         "Pais: " + pais + "\n" +
@@ -87,6 +119,8 @@ class MapFragment : Fragment(), OnMapReadyCallback {
                         "Calle: " + calle + "\n" +
                         "Codigo Postal: " + codigoPostal + "\n",
                 Toast.LENGTH_SHORT).show()
+
+                 */
             }
         })
 

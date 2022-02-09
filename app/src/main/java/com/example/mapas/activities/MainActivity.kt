@@ -7,7 +7,8 @@ import android.view.MenuItem
 import androidx.fragment.app.Fragment
 import com.example.mapas.R
 import com.example.mapas.fragments.MainFragment
-import com.example.mapas.fragments.MapFragment
+import com.example.mapas.fragments.MapsFragment
+import com.example.mapas.fragments.MapsGpsFragment
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,7 +30,8 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when(item.itemId) {
             R.id.menu_principal -> fragmentoActual = MainFragment()
-            R.id.menu_mapa -> fragmentoActual = MapFragment()
+            R.id.menu_mapa -> fragmentoActual = MapsFragment()
+            R.id.menu_mapa_gps -> fragmentoActual = MapsGpsFragment()
         }
         cambiarFragmento(fragmentoActual)
         return super.onOptionsItemSelected(item)

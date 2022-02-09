@@ -12,4 +12,9 @@
         android:title="@string/ir_a_maps"
         app:showAsAction="always"/>
 
+    <item
+        android:id="@+id/menu_mapa_gps"
+        android:title="@string/gps"
+        app:showAsAction="ifRoom"/>
+
 </menu>
