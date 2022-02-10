@@ -73,18 +73,22 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         //mMap.moveCamera(CameraUpdateFactory.newLatLng(logroño))
 
         mMap.setOnMapClickListener { latLng ->
-            Toast.makeText(this, "Las coordenadas son: \n" +
-            "Latitud: " + latLng.latitude + "\n" +
-            "Longitud: " + latLng.longitude, Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this, "Las coordenadas son: \n" +
+                        "Latitud: " + latLng.latitude + "\n" +
+                        "Longitud: " + latLng.longitude, Toast.LENGTH_SHORT
+            ).show()
         }
 
         mMap.setOnMapLongClickListener { latLng ->
-            Toast.makeText(this, "--Las coordenadas son: \n" +
-                    "Latitud: " + latLng.latitude + "\n" +
-                    "Longitud: " + latLng.longitude, Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this, "--Las coordenadas son: \n" +
+                        "Latitud: " + latLng.latitude + "\n" +
+                        "Longitud: " + latLng.longitude, Toast.LENGTH_SHORT
+            ).show()
         }
 
-        mMap.setOnMarkerDragListener(object: GoogleMap.OnMarkerDragListener{
+        mMap.setOnMarkerDragListener(object : GoogleMap.OnMarkerDragListener {
             override fun onMarkerDragStart(p0: Marker) {
 
             }
@@ -94,9 +98,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             }
 
             override fun onMarkerDragEnd(marker: Marker) {
-                Toast.makeText(this@MapsActivity, "Drag: Las coordenadas son: \n" +
-                        "Latitud: " + marker.position.latitude + "\n" +
-                        "Longitud: " + marker.position.longitude, Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this@MapsActivity, "Drag: Las coordenadas son: \n" +
+                            "Latitud: " + marker.position.latitude + "\n" +
+                            "Longitud: " + marker.position.longitude, Toast.LENGTH_SHORT
+                ).show()
             }
         })
     }
