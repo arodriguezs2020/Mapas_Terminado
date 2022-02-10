@@ -18,6 +18,9 @@ import android.Manifest
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import androidx.core.location.LocationManagerCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -25,15 +28,14 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
-@Suppress("DEPRECATION", "NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
 class MapsGpsFragment : Fragment(), OnMapReadyCallback, LocationListener {
 
     // --- Inicializamos una serie de variables que nos servirán a la hora de realizar las siguientes implementaciones --- /
-    private lateinit var miVista: View
-    private lateinit var gestorDeLocation: LocationManager
+    private var miVista: View? = null
     private var locationActual: Location? = null
     private var marcador: Marker? = null
     private var gMap: GoogleMap? = null
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -42,18 +44,20 @@ class MapsGpsFragment : Fragment(), OnMapReadyCallback, LocationListener {
         // Inflate the layout for this fragment
         miVista = inflater.inflate(R.layout.fragment_maps_gps, container, false)
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(miVista!!.context)
+
         // Instanciamos el boton flotante que hemos metido en nuestro xml
-        val fab: FloatingActionButton = miVista.findViewById(R.id.fab) as FloatingActionButton
+        val fab: FloatingActionButton = miVista!!.findViewById(R.id.fab) as FloatingActionButton
 
         // Cuando clicken en el boton
         fab.setOnClickListener {
             // Checkeamos los permisos y los redirigimos a la misma pantalla
             if (ActivityCompat.checkSelfPermission(
-                    miVista.context,
+                    miVista!!.context,
                     Manifest.permission.ACCESS_FINE_LOCATION
                 ) != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(
-                    miVista.context,
+                    miVista!!.context,
                     Manifest.permission.ACCESS_COARSE_LOCATION
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
@@ -61,41 +65,40 @@ class MapsGpsFragment : Fragment(), OnMapReadyCallback, LocationListener {
             }
 
             // Comprobamos si nos esta actualizando a traves del GPS o a traves del NETWORK
-            var location: Location? =
-                gestorDeLocation.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-
-            if (location == null) {
-                location = gestorDeLocation.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-            }
-
-            // Lo asignamos a la variable locationActual
-            locationActual = location
-
-            // Y comprobamos si es nulo o no, si no lo es actualizamos el marcador a esa localización
-            if (locationActual != null) {
-                actualizarOCrearMarcador(location!!)
-
-                // Hacemos la animación de la cámara para darle mejor experiencia al usuario
-                val camara = CameraPosition.builder()
-                    .target(LatLng(location.latitude, location.longitude))
-                    .zoom(17f)
-                    .bearing(0f) // Rotación
-                    .tilt(30f) // Ángulo
-                    .build()
-
-                gMap?.animateCamera(CameraUpdateFactory.newCameraPosition(camara))
+            fusedLocationClient.lastLocation.addOnSuccessListener { location : Location? ->
+                location(location!!)
             }
         }
 
         // Retornamos la vista
-        return miVista
+        return miVista!!
+    }
+
+    private fun location(location: Location) {
+        // Lo asignamos a la variable locationActual
+        locationActual = location
+
+        // Y comprobamos si es nulo o no, si no lo es actualizamos el marcador a esa localización
+        if (locationActual != null) {
+            actualizarOCrearMarcador(location)
+
+            // Hacemos la animación de la cámara para darle mejor experiencia al usuario
+            val camara = CameraPosition.builder()
+                .target(LatLng(location.latitude, location.longitude))
+                .zoom(17f)
+                .bearing(0f) // Rotación
+                .tilt(30f) // Ángulo
+                .build()
+
+            gMap!!.animateCamera(CameraUpdateFactory.newCameraPosition(camara))
+        }
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
         val mapView: MapView?
-        mapView = miVista.findViewById(R.id.mapViewGps) as MapView
+        mapView = miVista!!.findViewById(R.id.mapViewGps) as MapView
         mapView.onCreate(null)
         mapView.onResume()
         mapView.getMapAsync(this)
@@ -130,14 +133,14 @@ class MapsGpsFragment : Fragment(), OnMapReadyCallback, LocationListener {
 
     override fun onMapReady(googleMap: GoogleMap?) {
 
-        gMap = googleMap!!
+        gMap = googleMap
 
         if (ActivityCompat.checkSelfPermission(
-                miVista.context,
+                miVista!!.context,
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
             && ActivityCompat.checkSelfPermission(
-                miVista.context,
+                miVista!!.context,
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
@@ -147,26 +150,15 @@ class MapsGpsFragment : Fragment(), OnMapReadyCallback, LocationListener {
         gMap?.isMyLocationEnabled = true
         // gMap.uiSettings.isMyLocationButtonEnabled = false     ------> Con esta opcion desactivamos la localización del usuario
 
-        gestorDeLocation.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0f, this)
-        gestorDeLocation.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 1000, 0f, this)
+        fusedLocationClient.lastLocation.addOnSuccessListener { location : Location? ->
+            location(location!!)
+        }
     }
 
     override fun onLocationChanged(location: Location) {
         Toast.makeText(context, "Actualizado -> " + location.provider, Toast.LENGTH_SHORT).show()
 
         actualizarOCrearMarcador(location)
-    }
-
-    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {
-        super.onStatusChanged(provider, status, extras)
-    }
-
-    override fun onProviderEnabled(provider: String) {
-        super.onProviderEnabled(provider)
-    }
-
-    override fun onProviderDisabled(provider: String) {
-        super.onProviderDisabled(provider)
     }
 
     private fun actualizarOCrearMarcador(location: Location) {
